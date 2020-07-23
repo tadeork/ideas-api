@@ -5,7 +5,7 @@ import { UserService } from './user.service';
 import { UserDTO } from './user.dto';
 import { ValidationPipe } from '../shared/validation.pipe';
 
-@Controller('api/user')
+@Controller('api')
 export class UserController {
   constructor(private userService: UserService) {}
 
