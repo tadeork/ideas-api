@@ -38,6 +38,10 @@ export class ValidationPipe implements PipeTransform<any> {
     return !types.includes(metatype);
   }
 
+  /**
+   * Format errorrs since it could be an array of values.
+   * @param errors
+   */
   private formatErrors(errors: any[]) {
     return errors
       .map(err => {

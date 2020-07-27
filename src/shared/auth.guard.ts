@@ -16,7 +16,6 @@ export class AuthGuard implements CanActivate {
       return false;
     }
     request.user = await this.validateToken(request.headers.authorization);
-
     return true;
   }
 
@@ -27,7 +26,10 @@ export class AuthGuard implements CanActivate {
     }
 
     try {
-      const decodedToken = jwt.verify(tokenData[1], process.env.SECRET);
+      const decodedToken: any = await jwt.verify(
+        tokenData[1],
+        process.env.SECRET,
+      );
       return decodedToken;
     } catch (err) {
       const message = 'Token error: ' + (err.message || err.name);

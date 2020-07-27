@@ -5,10 +5,12 @@ import {
   CreateDateColumn,
   Column,
   BeforeInsert,
+  OneToMany,
 } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import { UserResponseObject } from './user.dto';
+import { IdeaEntity } from 'src/idea/idea.entity';
 
 @Entity('user')
 export class UserEntity {
@@ -33,11 +35,20 @@ export class UserEntity {
     this.password = await bcrypt.hash(this.password, 10);
   }
 
+  @OneToMany(
+    type => IdeaEntity,
+    idea => idea.author,
+  )
+  ideas: IdeaEntity[];
+
   toResponseObject(showToken = true): UserResponseObject {
     const { id, created, username, token } = this;
     const responseObject: any = { id, created, username };
     if (showToken) {
       responseObject.token = token;
+    }
+    if (this.ideas) {
+      responseObject.ideas = this.ideas;
     }
     return responseObject;
   }
