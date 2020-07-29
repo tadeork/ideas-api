@@ -6,11 +6,14 @@ import {
   Column,
   BeforeInsert,
   OneToMany,
+  JoinTable,
+  ManyToMany,
 } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import { UserResponseObject } from './user.dto';
 import { IdeaEntity } from 'src/idea/idea.entity';
+import { IdeaResponseObject } from 'src/idea/idea.dto';
 
 @Entity('user')
 export class UserEntity {
@@ -39,7 +42,11 @@ export class UserEntity {
     type => IdeaEntity,
     idea => idea.author,
   )
-  ideas: IdeaEntity[];
+  ideas: IdeaResponseObject[];
+
+  @ManyToMany(type => IdeaEntity, { cascade: true })
+  @JoinTable()
+  public bookmarks: IdeaResponseObject[];
 
   toResponseObject(showToken = true): UserResponseObject {
     const { id, created, username, token } = this;
@@ -49,6 +56,9 @@ export class UserEntity {
     }
     if (this.ideas) {
       responseObject.ideas = this.ideas;
+    }
+    if (this.bookmarks) {
+      responseObject.bookmarks = this.bookmarks;
     }
     return responseObject;
   }

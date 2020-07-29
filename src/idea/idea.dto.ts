@@ -16,4 +16,6 @@ export class IdeaResponseObject {
   idea: string;
   description: string;
   author: UserResponseObject;
+  upvotes: number;
+  downvotes: number;
 }
