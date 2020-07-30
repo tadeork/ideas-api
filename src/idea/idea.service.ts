@@ -18,7 +18,7 @@ export class IdeaService {
 
   async showAll(): Promise<IdeaResponseObject[]> {
     const ideas = await this.ideaRepository.find({
-      relations: ['author', 'upvotes', 'downvotes'],
+      relations: ['author', 'upvotes', 'downvotes', 'comments'],
     });
     return ideas.map(idea => this.toResponseObject(idea));
   }
@@ -74,7 +74,7 @@ export class IdeaService {
   async upvote(id: string, userId: string) {
     const idea: IdeaEntity = await this.ideaRepository.findOne({
       where: { id },
-      relations: ['author', 'upvotes', 'downvotes'],
+      relations: ['author', 'upvotes', 'downvotes', 'comments'],
     });
     const user: UserEntity = await this.userRepository.findOne({
       where: { id: userId },
@@ -86,7 +86,7 @@ export class IdeaService {
   async downvote(id: string, userId: string) {
     const idea: IdeaEntity = await this.ideaRepository.findOne({
       where: { id },
-      relations: ['author', 'upvotes', 'downvotes'],
+      relations: ['author', 'upvotes', 'downvotes', 'comments'],
     });
     const user: UserEntity = await this.userRepository.findOne({
       where: { id: userId },
@@ -146,7 +146,7 @@ export class IdeaService {
   private async checkEntity(id: string): Promise<IdeaResponseObject> {
     const idea = await this.ideaRepository.findOne({
       where: { id },
-      relations: ['author', 'upvotes', 'downvotes'],
+      relations: ['author', 'upvotes', 'downvotes', 'comments'],
     });
     if (!idea) {
       throw new HttpException('Not found', HttpStatus.NOT_FOUND);
