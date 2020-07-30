@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { IdeaEntity } from './idea.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IdeaDTO, IdeaResponseObject } from './idea.dto';
 import { UserEntity } from 'src/user/user.entity';
-import { UserResponseObject } from 'src/user/user.dto';
+import { Votes } from 'src/shared/votes.enum';
 
 @Injectable()
 export class IdeaService {
@@ -71,6 +71,55 @@ export class IdeaService {
     return user.toResponseObject(false);
   }
 
+  async upvote(id: string, userId: string) {
+    const idea: IdeaEntity = await this.ideaRepository.findOne({
+      where: { id },
+      relations: ['author', 'upvotes', 'downvotes'],
+    });
+    const user: UserEntity = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+    this.vote(idea, user, Votes.UP);
+    return this.toResponseObject(idea);
+  }
+
+  async downvote(id: string, userId: string) {
+    const idea: IdeaEntity = await this.ideaRepository.findOne({
+      where: { id },
+      relations: ['author', 'upvotes', 'downvotes'],
+    });
+    const user: UserEntity = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+    this.vote(idea, user, Votes.DOWN);
+    return this.toResponseObject(idea);
+  }
+
+  private async vote(idea: IdeaEntity, user: UserEntity, vote: Votes) {
+    const opposite = vote === Votes.UP ? Votes.DOWN : Votes.UP;
+
+    if (
+      idea[opposite].filter((voter: UserEntity) => voter.id === user.id)
+        .length > 0 ||
+      idea[vote].filter((voter: UserEntity) => voter.id === user.id).length > 0
+    ) {
+      idea[opposite] = idea[opposite].filter(voter => voter.id !== user.id);
+      idea[vote] = idea[vote].filter(
+        (voter: UserEntity) => voter.id !== user.id,
+      );
+      await this.ideaRepository.save(idea);
+    } else if (
+      idea[vote].filter((voter: UserEntity) => voter.id === user.id).length < 1
+    ) {
+      idea[vote].push(user);
+      await this.ideaRepository.save(idea);
+    } else {
+      throw new HttpException('Unable to cast vote', HttpStatus.BAD_REQUEST);
+    }
+
+    return idea;
+  }
+
   private async checkBookmark(
     id: string,
     userId: string,
@@ -97,23 +146,12 @@ export class IdeaService {
   private async checkEntity(id: string): Promise<IdeaResponseObject> {
     const idea = await this.ideaRepository.findOne({
       where: { id },
-      relations: ['author'],
+      relations: ['author', 'upvotes', 'downvotes'],
     });
     if (!idea) {
       throw new HttpException('Not found', HttpStatus.NOT_FOUND);
     }
     return this.toResponseObject(idea);
-  }
-
-  private async checkEntityIdea(id: string): Promise<IdeaEntity> {
-    const idea = await this.ideaRepository.findOne({
-      where: { id },
-      relations: ['author'],
-    });
-    if (!idea) {
-      throw new HttpException('Not found', HttpStatus.NOT_FOUND);
-    }
-    return idea;
   }
 
   private toResponseObject(idea: IdeaEntity): IdeaResponseObject {
